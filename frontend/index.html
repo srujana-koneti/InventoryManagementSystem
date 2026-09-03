@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management & Resource Optimization System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Login Landing View -->
+    <div id="loginView" class="login-view">
+        <div class="login-card">
+            <div class="login-brand">
+                <div class="logo-icon large">📦</div>
+                <h2>Inventory Management & Resource Optimization</h2>
+                <p class="login-subtitle">Sign in to access your inventory workspace</p>
+            </div>
+
+            <div id="loginAlert" class="alert-box danger hidden" style="display: none;"></div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginUsername">Username or Email *</label>
+                    <input type="text" id="loginUsername" placeholder="e.g. STAFF or Manager" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Password *</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">Sign In</button>
+            </form>
+
+            <div class="demo-accounts-box">
+                <p class="demo-accounts-title">Quick Demo Login:</p>
+                <div class="demo-chips">
+                    <button type="button" class="demo-chip chip-manager" id="fillManagerBtn" title="Fill Manager credentials">
+                        <span><strong>Inventory Manager:</strong> <code>Manager</code> / <code>manager@123</code></span>
+                        <span class="badge badge-info">Full Access</span>
+                    </button>
+                    <button type="button" class="demo-chip chip-staff" id="fillStaffBtn" title="Fill Staff credentials">
+                        <span><strong>Staff Member:</strong> <code>STAFF</code> / <code>staff</code></span>
+                        <span class="badge badge-warning">Restricted</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard View (Shown after authentication) -->
+    <div id="dashboardView" class="dashboard-view" style="display: none;">
+        <header class="app-header">
+            <div class="header-container">
+                <div class="brand">
+                    <div class="logo-icon">📦</div>
+                    <div>
+                        <h1>Inventory Management & Resource Optimization</h1>
+                        <p class="subtitle">Core Java & DSA Powered • Built-in JDK HttpServer</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div id="userProfileBadge" class="user-profile-badge">
+                        <span id="userBadgeIcon">👤</span>
+                        <strong id="userBadgeName">Manager</strong>
+                        <span id="userBadgeRole" class="badge badge-info">Inventory Manager</span>
+                    </div>
+                    <button id="refreshBtn" class="btn btn-secondary btn-sm">🔄 Refresh</button>
+                    <button id="logoutBtn" class="btn btn-danger btn-sm">🚪 Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-container">
+        <!-- Global Alert/Notification Banner -->
+        <div id="globalNotification" class="alert-box hidden" style="display: none;"></div>
+
+        <!-- KPI Metrics Summary Cards -->
+        <section class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon blue">📊</div>
+                <div class="metric-content">
+                    <span class="metric-label">Total Products</span>
+                    <span class="metric-value" id="metricTotalProducts">0</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon green">📦</div>
+                <div class="metric-content">
+                    <span class="metric-label">Total Stock Units</span>
+                    <span class="metric-value" id="metricTotalStock">0</span>
+                    <span class="metric-sub">Across all categories</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon red">⚠️</div>
+                <div class="metric-content">
+                    <span class="metric-label">Low Stock Alerts</span>
+                    <span class="metric-value" id="metricLowStock">0</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon orange">⏳</div>
+                <div class="metric-content">
+                    <span class="metric-label">Pending Requests</span>
+                    <span class="metric-value" id="metricPendingRequests">0</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Workspace Grid -->
+        <div class="workspace-grid">
+            <!-- Left Column: Inventory Catalog Table -->
+            <section class="card table-card">
+                <div class="card-header">
+                    <div class="header-title-actions">
+                        <h2>📋 Inventory Catalog</h2>
+                        <div class="header-buttons">
+                            <button id="openAddProductModalBtn" class="btn btn-success btn-sm">➕ Add Product</button>
+                            <button id="openDeleteProductModalBtn" class="btn btn-danger btn-sm">🗑️ Remove Product</button>
+                        </div>
+                    </div>
+                    <div class="table-controls">
+                        <input type="text" id="searchInput" placeholder="🔍 Search by name, category, or ID..." class="search-box">
+                        <select id="filterSelect" class="filter-dropdown">
+                            <option value="ALL">All Items</option>
+                            <option value="LOW_STOCK">Low Stock Only</option>
+                            <option value="OUT_OF_STOCK">Out of Stock Only</option>
+                            <option value="NORMAL">Normal Stock</option>
+                        </select>
+                    </div>
+                    <p id="catalogTip" class="section-help" style="margin-top: 0.5rem; margin-bottom: -0.25rem;">💡 Tip: Click on any product row below to <strong>Request Stock</strong> or <strong>Update Details</strong>.</p>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock Qty</th>
+                                <th>Reorder Level</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">Loading inventory data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Right Column: Request Queue & Restock Form -->
+            <div class="side-column">
+                <!-- Incoming Stock Requests -->
+                <section class="card queue-card" id="incomingRequestsCard">
+                    <div class="card-header">
+                        <h2>⏱️ Incoming Requests</h2>
+                        <button id="processNextBtn" class="btn btn-primary btn-sm">▶ Process Next</button>
+                    </div>
+                    <p class="section-help">Stock requests processed strictly in order of arrival.</p>
+                    <div id="queueContainer" class="queue-list">
+                        <p class="empty-state">No pending requests in queue.</p>
+                    </div>
+                    <div id="processAlert" class="alert-box hidden" style="display: none;"></div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Stock Transaction Audit History -->
+        <section class="card audit-card">
+            <div class="card-header">
+                <h2>📜 Stock Transaction History</h2>
+                <span class="badge badge-info">Audit Trail</span>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Txn ID</th>
+                            <th>Timestamp</th>
+                            <th>Product ID</th>
+                            <th>Product Name</th>
+                            <th>Action</th>
+                            <th>Quantity</th>
+                            <th>Resulting Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center">No transactions recorded yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Add Product Modal -->
+        <div id="addProductModal" class="modal-overlay hidden" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>➕ Add New Product</h3>
+                    <button id="closeModalBtn" class="close-btn" type="button" title="Close">&times;</button>
+                </div>
+                <div id="modalAlert" class="alert-box hidden" style="display: none;"></div>
+                <form id="addProductForm" class="stock-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newProdId">Product ID *</label>
+                            <input type="text" id="newProdId" placeholder="e.g. P106" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newProdName">Product Name *</label>
+                            <input type="text" id="newProdName" placeholder="e.g. Laptop Stand" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newProdCategory">Category</label>
+                            <input type="text" id="newProdCategory" placeholder="e.g. Accessories">
+                        </div>
+                        <div class="form-group">
+                            <label for="newProdPrice">Price ($) *</label>
+                            <input type="number" id="newProdPrice" step="0.01" min="0.01" placeholder="e.g. 29.90" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newProdQty">Initial Stock Quantity *</label>
+                            <input type="number" id="newProdQty" min="0" value="10" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newProdReorder">Reorder Level *</label>
+                            <input type="number" id="newProdReorder" min="0" value="5" required>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" id="cancelAddBtn" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-success">Add Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Delete Product Modal -->
+        <div id="deleteProductModal" class="modal-overlay hidden" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>🗑️ Delete / Remove Product</h3>
+                    <button id="closeDeleteModalBtn" class="close-btn" type="button" title="Close">&times;</button>
+                </div>
+                <div id="deleteModalAlert" class="alert-box hidden" style="display: none;"></div>
+                <form id="deleteProductForm" class="stock-form">
+                    <div class="form-group">
+                        <label for="deleteProductSelect">Select Product to Remove *</label>
+                        <select id="deleteProductSelect" required>
+                            <option value="">-- Select Product --</option>
+                        </select>
+                    </div>
+                    <p class="section-help" style="margin-top: 0.25rem;">
+                        ⚠️ Note: Products with pending stock requests cannot be removed until requests are completed or cleared.
+                    </p>
+                    <div class="modal-actions">
+                        <button type="button" id="cancelDeleteBtn" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Remove Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Row Action Selection Modal -->
+        <div id="rowActionModal" class="modal-overlay hidden" style="display: none;">
+            <div class="modal-card action-selector-card">
+                <div class="modal-header">
+                    <div>
+                        <h3 id="actionModalTitle">📦 Product Actions</h3>
+                        <p id="actionModalSubtitle" class="section-help" style="margin-top: 0.25rem;">Select an action for this item</p>
+                    </div>
+                    <button id="closeRowActionModalBtn" class="close-btn" type="button" title="Close">&times;</button>
+                </div>
+
+                <div class="row-action-options">
+                    <button type="button" id="selectRequestStockBtn" class="action-option-btn option-request">
+                        <div class="option-icon">🚚</div>
+                        <div class="option-info">
+                            <h4>Option A: Request Stock</h4>
+                            <p>Submit restock (ADD) or dispatch (REMOVE) request to the queue</p>
+                        </div>
+                        <span class="option-arrow">➔</span>
+                    </button>
+
+                    <button type="button" id="selectUpdateProductBtn" class="action-option-btn option-update">
+                        <div class="option-icon">✏️</div>
+                        <div class="option-info">
+                            <h4>Option B: Update Product</h4>
+                            <p>Edit name, category, price, stock quantity, or reorder level</p>
+                        </div>
+                        <span class="option-arrow">➔</span>
+                    </button>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 1.25rem;">
+                    <button type="button" id="cancelRowActionBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Stock Modal (Option 1) -->
+        <div id="stockRequestModal" class="modal-overlay hidden" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <div>
+                        <h3>🚚 Request Stock</h3>
+                        <p id="requestStockTargetLabel" class="section-help" style="margin-top: 0.25rem; font-weight: 600; color: var(--primary);">Product: P101 - Wireless Mouse</p>
+                    </div>
+                    <button id="closeRequestStockModalBtn" class="close-btn" type="button" title="Close">&times;</button>
+                </div>
+                <div id="requestStockModalAlert" class="alert-box hidden" style="display: none;"></div>
+
+                <form id="stockRequestModalForm" class="stock-form">
+                    <input type="hidden" id="reqModalProductId">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reqModalType">Action Type *</label>
+                            <select id="reqModalType" required>
+                                <option value="ADD">ADD (Restock)</option>
+                                <option value="REMOVE">REMOVE (Dispatch)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reqModalQuantity">Quantity *</label>
+                            <input type="number" id="reqModalQuantity" min="1" value="5" required>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" id="cancelRequestStockBtn" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-success">Submit Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Update Product Modal (Option 2) -->
+        <div id="updateProductModal" class="modal-overlay hidden" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <div>
+                        <h3>✏️ Update Product Details</h3>
+                        <p id="updateProductTargetLabel" class="section-help" style="margin-top: 0.25rem;">Modify item information in catalog</p>
+                    </div>
+                    <button id="closeUpdateModalBtn" class="close-btn" type="button" title="Close">&times;</button>
+                </div>
+                <div id="updateModalAlert" class="alert-box hidden" style="display: none;"></div>
+
+                <form id="updateProductForm" class="stock-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="updateProdId">Product ID (Fixed)</label>
+                            <input type="text" id="updateProdId" readonly disabled style="background-color: #f1f5f9; cursor: not-allowed;">
+                        </div>
+                        <div class="form-group">
+                            <label for="updateProdName">Product Name *</label>
+                            <input type="text" id="updateProdName" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="updateProdCategory">Category</label>
+                            <input type="text" id="updateProdCategory">
+                        </div>
+                        <div class="form-group">
+                            <label for="updateProdPrice">Price ($) *</label>
+                            <input type="number" id="updateProdPrice" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="updateProdQty">Stock Quantity *</label>
+                            <input type="number" id="updateProdQty" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateProdReorder">Reorder Level *</label>
+                            <input type="number" id="updateProdReorder" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" id="cancelUpdateBtn" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <p>Inventory Management & Resource Optimization System • Pure Core Java, HashMap, ArrayDeque, Merge Sort & Binary Search</p>
+    </footer>
+    </div> <!-- /#dashboardView -->
+
+    <script src="app.js"></script>
+</body>
+</html>
