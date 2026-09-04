@@ -2,6 +2,7 @@ package com.inventory.service;
 
 import com.inventory.model.Product;
 import com.inventory.model.StockRequest;
+import com.inventory.model.Supplier;
 import com.inventory.model.Transaction;
 
 import java.time.LocalDateTime;
@@ -25,6 +26,9 @@ public class InventoryService {
 
     // 1. HashMap for O(1) fast product ID lookup and storage
     private Map<String, Product> productCatalog = new HashMap<>();
+
+    // HashMap for supplier storage by ID
+    private Map<String, Supplier> supplierCatalog = new HashMap<>();
 
     // 2. Queue implemented as ArrayDeque to guarantee FIFO order of stock request processing
     private Queue<StockRequest> requestQueue = new ArrayDeque<>();
@@ -345,5 +349,42 @@ public class InventoryService {
         String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
         Transaction txn = new Transaction(txnId, productId, productName, type, qty, timestamp, resultingStock);
         transactionHistory.add(txn);
+    }
+
+    /**
+     * Adds a new supplier to the catalog.
+     * Constraint: Supplier ID must be unique.
+     *
+     * @param supplier the supplier to add
+     * @throws IllegalArgumentException if supplier is null or supplier ID already exists
+     */
+    public void addSupplier(Supplier supplier) {
+        if (supplier == null) {
+            throw new IllegalArgumentException("Supplier cannot be null.");
+        }
+        if (supplierCatalog.containsKey(supplier.getId())) {
+            throw new IllegalArgumentException("Supplier with ID " + supplier.getId() + " already exists.");
+        }
+        supplierCatalog.put(supplier.getId(), supplier);
+    }
+
+    /**
+     * Retrieves a supplier by their unique ID.
+     *
+     * @param id the supplier ID
+     * @return the Supplier object, or null if not found
+     */
+    public Supplier getSupplier(String id) {
+        if (id == null) return null;
+        return supplierCatalog.get(id.trim());
+    }
+
+    /**
+     * Returns a list copy of all registered suppliers.
+     *
+     * @return a List of all Supplier objects
+     */
+    public List<Supplier> getAllSuppliers() {
+        return new ArrayList<>(supplierCatalog.values());
     }
 }

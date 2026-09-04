@@ -2,6 +2,7 @@ package com.inventory.web;
 
 import com.inventory.model.Product;
 import com.inventory.model.StockRequest;
+import com.inventory.model.Supplier;
 import com.inventory.model.Transaction;
 import com.inventory.service.InventoryService;
 import com.sun.net.httpserver.HttpExchange;
@@ -43,6 +44,7 @@ public class SimpleHttpServer {
         server.createContext("/api/requests", new RequestsHandler());
         server.createContext("/api/requests/process", new ProcessRequestHandler());
         server.createContext("/api/transactions", new TransactionsHandler());
+        server.createContext("/api/suppliers", new SuppliersHandler());
 
         // Static Web Dashboard Files
         server.createContext("/", new StaticFileHandler());
@@ -61,6 +63,7 @@ public class SimpleHttpServer {
         System.out.println("   GET  /api/requests");
         System.out.println("   POST /api/requests/process");
         System.out.println("   GET  /api/transactions");
+        System.out.println("   GET  /api/suppliers");
         System.out.println("=================================================");
     }
 
@@ -459,6 +462,62 @@ public class SimpleHttpServer {
     }
 
     /**
+     * Handles GET and POST /api/suppliers
+     */
+    private class SuppliersHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            addCorsHeaders(exchange);
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            String method = exchange.getRequestMethod();
+            if ("GET".equalsIgnoreCase(method)) {
+                List<Supplier> suppliers = inventoryService.getAllSuppliers();
+                StringBuilder json = new StringBuilder("[");
+                for (int i = 0; i < suppliers.size(); i++) {
+                    json.append(supplierToJson(suppliers.get(i)));
+                    if (i < suppliers.size() - 1) json.append(",");
+                }
+                json.append("]");
+                sendJsonResponse(exchange, 200, json.toString());
+            } else if ("POST".equalsIgnoreCase(method)) {
+                String body = readRequestBody(exchange);
+                try {
+                    String id = extractJsonField(body, "id");
+                    String name = extractJsonField(body, "name");
+                    String contact = extractJsonField(body, "contact");
+
+                    if (id.isEmpty()) {
+                        sendJsonResponse(exchange, 400, "{\"success\":false,\"message\":\"Supplier ID cannot be empty.\"}");
+                        return;
+                    }
+                    if (name.isEmpty()) {
+                        sendJsonResponse(exchange, 400, "{\"success\":false,\"message\":\"Supplier Name cannot be empty.\"}");
+                        return;
+                    }
+                    if (contact.isEmpty()) {
+                        sendJsonResponse(exchange, 400, "{\"success\":false,\"message\":\"Supplier Contact cannot be empty.\"}");
+                        return;
+                    }
+
+                    Supplier supplier = new Supplier(id, name, contact);
+                    inventoryService.addSupplier(supplier);
+                    sendJsonResponse(exchange, 201, "{\"success\":true,\"message\":\"Supplier added successfully.\"}");
+                } catch (IllegalArgumentException e) {
+                    sendJsonResponse(exchange, 400, "{\"success\":false,\"message\":\"" + escapeJson(e.getMessage()) + "\"}");
+                } catch (Exception e) {
+                    sendJsonResponse(exchange, 400, "{\"success\":false,\"message\":\"Error adding supplier: " + escapeJson(e.getMessage()) + "\"}");
+                }
+            } else {
+                sendJsonResponse(exchange, 405, "{\"error\":\"Method Not Allowed\"}");
+            }
+        }
+    }
+
+    /**
      * Static file handler serving frontend files: index.html, style.css, app.js
      */
     private static class StaticFileHandler implements HttpHandler {
@@ -549,6 +608,15 @@ public class SimpleHttpServer {
         );
     }
 
+    private static String supplierToJson(Supplier s) {
+        return String.format(
+                "{\"id\":\"%s\",\"name\":\"%s\",\"contact\":\"%s\"}",
+                escapeJson(s.getId()),
+                escapeJson(s.getName()),
+                escapeJson(s.getContact())
+        );
+    }
+
     private static void sendJsonResponse(HttpExchange exchange, int statusCode, String responseJson) throws IOException {
         byte[] bytes = responseJson.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
@@ -633,6 +701,11 @@ public class SimpleHttpServer {
             service.addProduct(new Product("P103", "USB-C Hub", "Accessories", 34.99, 2, 8));
             service.addProduct(new Product("P104", "Desk Chair", "Furniture", 189.00, 20, 5));
             service.addProduct(new Product("P105", "Desk Mat", "Furniture", 45.00, 0, 10));
+
+            // Seed sample suppliers
+            service.addSupplier(new Supplier("S001", "Global Logistics Corp", "contact@globallogistics.com"));
+            service.addSupplier(new Supplier("S002", "Apex Tech Components", "+1-800-555-0199"));
+            service.addSupplier(new Supplier("S003", "Prime Office Supplies", "sales@primeoffice.com"));
 
             SimpleHttpServer server = new SimpleHttpServer(service);
             server.start();

@@ -497,6 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderQueue();
             renderTransactions();
             populateDeleteDropdown();
+            loadSuppliers();
         } catch (err) {
             console.error("Failed to load inventory data:", err);
             showGlobalNotification("Error connecting to server. Is the Java HTTP server running?", "danger");
@@ -903,6 +904,38 @@ document.addEventListener("DOMContentLoaded", () => {
             "'": '&#39;',
             '"': '&quot;'
         }[tag] || tag));
+    }
+
+    // =========================================================================
+    // Supplier Management (Standalone Additive)
+    // =========================================================================
+    const suppliersTableBody = document.getElementById("suppliersTableBody");
+
+    async function loadSuppliers() {
+        if (!suppliersTableBody) return;
+        try {
+            const res = await fetch("/api/suppliers");
+            if (!res.ok) {
+                suppliersTableBody.innerHTML = `<tr><td colspan="3" class="text-center">Failed to load suppliers.</td></tr>`;
+                return;
+            }
+            const suppliers = await res.json();
+            if (!suppliers || suppliers.length === 0) {
+                suppliersTableBody.innerHTML = `<tr><td colspan="3" class="text-center">No suppliers registered yet.</td></tr>`;
+                return;
+            }
+
+            suppliersTableBody.innerHTML = suppliers.map(s => `
+                <tr>
+                    <td><strong>${escapeHtml(s.id)}</strong></td>
+                    <td>${escapeHtml(s.name)}</td>
+                    <td>${escapeHtml(s.contact)}</td>
+                </tr>
+            `).join("");
+        } catch (err) {
+            console.error("Error loading suppliers:", err);
+            suppliersTableBody.innerHTML = `<tr><td colspan="3" class="text-center">Error loading suppliers.</td></tr>`;
+        }
     }
 
     // =========================================================================
